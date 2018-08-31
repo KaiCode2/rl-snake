@@ -57,8 +57,6 @@ class SnakeEnv(gym.Env):
         else:
             self.snake_view.move_snake(action)
 
-
-
         done = self.snake_view.game_over
 
         if np.array_equal(self.snake_view.snake.snake_head, self.snake_view.goal):
@@ -68,7 +66,7 @@ class SnakeEnv(gym.Env):
 
         self.state = self.snake_view.snake.snake_head
 
-        info = {}
+        info = self.snake_view.goal
 
         return self.state, reward, done, info
 
@@ -109,7 +107,7 @@ class SnakeView2D:
         self.__entrance = np.zeros(2, dtype=int)
 
         # Set the Goal
-        self.__goal = np.array(self.grid_size) - np.array((1, 1)) # write goal
+        self.__goal = self.__snake.target
 
         # Create a background
         self.background = pygame.Surface(self.screen.get_size()).convert()
@@ -162,9 +160,10 @@ class SnakeView2D:
 
             # move the snake
             self.__snake.snake_head = next_point
-            if self.__snake == self.__snake.target:
+            if self.__snake.snake_head[0] == self.__snake.target[0] and self.__snake.snake_head[1] == self.__snake.target[1]:
                 self.__snake.snake_length += 1
                 self.__snake.new_target()
+                self.__draw_target()
             else:
                 self.__snake.snake_boxes = self.__snake.snake_boxes[1:]
 
@@ -292,6 +291,7 @@ class SnakeState:
 
     def new_target(self):
         self.target = (random.randint(0, self.GRID_W-1), random.randint(0, self.GRID_H-1))
+        if self.hit_self(self.target[0], self.target[1]): self.new_target()
 
     def is_within_bound(self, x, y):
         # true if cell is still within bounds after the move
